@@ -1,0 +1,104 @@
+import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
+import 'package:tienda/screens/detalle_producto_screen.dart';
+import 'package:tienda/servicios/api_servicios.dart';
+import 'package:tienda/modelos/producto.dart';
+import 'package:tienda/screens/agregar_producto_screen.dart';
+
+
+class ProductScreen extends StatefulWidget {
+  final int categoryId;
+
+  ProductScreen({required this.categoryId});
+
+  @override
+  _ProductScreenState createState() => _ProductScreenState();
+}
+
+class _ProductScreenState extends State<ProductScreen> {
+  List<Product> products = [];
+  final ApiServicios apiService = ApiServicios();
+  late Future<List<dynamic>> _products;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProductsByCategory();
+
+    print("wwwwwwwwwwwwwwwwwww__ProductScreenState");
+    _products = apiService.getProducts();
+  }
+
+  Future<void> _fetchProductsByCategory() async {
+    final fetchedProductsByCategory = await apiService.getProductsByCategory(widget.categoryId);
+    setState(() {
+      products = fetchedProductsByCategory;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('La tienda -- Lista de Productos'),
+      ),
+      body: GridView.builder(
+        padding: EdgeInsets.all(10),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2, // Número de columnas
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 0.8, // Proporción ancho:alto
+        ),
+        itemCount: products.length,
+        itemBuilder: (context, index) {
+          final product = products[index];
+          print("Antes Si tengo url o no: ${products[index].imagen}");
+          return Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Image.network(product.imageUrl, fit: BoxFit.cover),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      Text(
+                        product.name,
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Text('Stock: ${product.stock}'),
+                      Text('\$${product.price.toStringAsFixed(2)}'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final newProduct = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProductFormScreen(),
+            ),
+          );
+
+          if (newProduct != null) {
+            setState(
+                    () {
+                  _products = apiService.getProducts();
+                }
+            );
+          }
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}

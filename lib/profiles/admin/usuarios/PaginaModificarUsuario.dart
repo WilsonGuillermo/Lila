@@ -3,34 +3,33 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:tienda/Transverso/parametros.dart';
+import 'package:tienda/servicios/api_servicios_cuentas.dart';
 
-class PaginaModificarUsuario extends StatefulWidget {
+class EditProfilePage extends StatefulWidget {
+  //final UserModel user; // Recibe el usuario a modificar
+  final dynamic usuario;
+  //List<dynamic> _usuariosFiltrados = [];
+
+  //EditProfilePage({required this.usuario, Key? key}) : super(key: key);
+  EditProfilePage({required this.usuario});
+
   @override
-  _PaginaModificarUsuarioState createState() => _PaginaModificarUsuarioState();
+  _EditProfilePageState createState() => _EditProfilePageState();
 }
 
-class _PaginaModificarUsuarioState extends State<PaginaModificarUsuario> {
+class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _surnameController = TextEditingController();
-  final _loginController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  DateTime? _selectedDate;
   List<dynamic> _roles = [];
-  dynamic _selectedRole;
-  //String? _selectedProfile;
+  late TextEditingController _nameController;
+  late TextEditingController _lastnameController;
+  late String _selectedRole;
+
+  //final dynamic usuario_a_modifier = usuario;
+  //print('el usuario a modificar es: 'usuario_a_modifier);
 
   // Recuperacion parametros backend
   String url = Parametros.direccionBackend;
   int puerto = Parametros.puerto;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchRoles();
-  }
 
   Future<void> _fetchRoles() async {
     final response = await http.get(Uri.parse('$url:$puerto/roles'));
@@ -50,246 +49,131 @@ class _PaginaModificarUsuarioState extends State<PaginaModificarUsuario> {
     }
   }
 
-  bool isValidEmail(String email) {
-    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    return emailRegex.hasMatch(email);
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.usuario["name"]);
+    _lastnameController = TextEditingController(text: widget.usuario["lastname"]);
+    _selectedRole = widget.usuario["rol"] ?? "Usuario"; // Si no tiene role pone "Usuario"
+    print("el rol est : $_selectedRole");
+
+    Future.microtask(() => _fetchRoles()); // Cargamos los roles
   }
 
-  bool isValidPassword(String password) {
-    if (password.length < 8) return false;
-    if (!RegExp(r'[A-Z]').hasMatch(password)) return false;
-    if (!RegExp(r'[a-z]').hasMatch(password)) return false;
-    if (!RegExp(r'[0-9]').hasMatch(password)) return false;
-    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) return false;
-    return true;
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _lastnameController.dispose();
+    super.dispose();
   }
 
-  Future<bool> isLoginAvailable(String login) async {
-    final response = await http.get(Uri.parse('$url:$puerto/verificarCuenta/$login'));
-    return response.statusCode == 200;
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
-
-  void _submitForm() async {
+  void _updateUsuario() async {
     if (_formKey.currentState!.validate()) {
-      final loginAvailable = await isLoginAvailable(_loginController.text);
-      if (!loginAvailable) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('El login ya existe')),
-        );
-        return;
-      }
+      final updatedUser = {
+        "id": widget.usuario["id"], // Necesitamos el ID para actualizar
+        "name": _nameController.text,
+        "lastname": _lastnameController.text,
+        "role": _selectedRole,
+      };
 
-      if (_selectedRole == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Por favor seleccione un perfil')),
-        );
-        return;
-      }
+      bool success = await ApiServiciosCuentas.modificarUsuario(updatedUser);
 
-      final response = await http.post(
-        Uri.parse('$url:$puerto/agregarCuenta'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'name': _nameController.text,
-          'surname': _surnameController.text,
-          'login': _loginController.text,
-          'email': _emailController.text,
-          'password': _passwordController.text,
-          'birth_date': _selectedDate.toString(),
-          'role': _selectedRole['role'].toString(),
-        }),
-      );
-
-      if (response.statusCode == 201) {
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuario creado exitosamente')),
+          const SnackBar(content: Text("Usuario actualizado correctamente")),
         );
+        Navigator.pop(context, true); // Retorna "true" para indicar que hubo cambios
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error en la creación del usuario')),
+          const SnackBar(content: Text("Error al actualizar usuario")),
         );
       }
     }
+  }
+
+  void _deleteUsuario(dynamic user) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Eliminar usuario"),
+        content: Text("¿Seguro que quieres eliminar a ${user["name"]}?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () async {
+              bool success = await ApiServiciosCuentas.suprimirUsuario(user["id"]);
+              print("usuario suprimé $success");
+
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Usuario eliminado")),
+                );
+                Navigator.pop(context, true); //Devolvemos "True" al cerrar la pagina
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Error al eliminar usuario")),
+                );
+              }
+
+              Navigator.pop(context);
+            },
+            child: const Text("Eliminar", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        // Utiliza el atributo flexibleSpace para definir el fondo de gradiente
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.blue,
-                Colors.green,
-              ],
-            ),
-          ),
-        ),
-        leading: const Icon(Icons.account_circle_rounded),
-        leadingWidth: 100, // default is 56
-        elevation: 10.0,
-
-        title: const Text(
-          'La Tienda -- Pagina Creacion de Usuarios',
-
-          overflow: TextOverflow.ellipsis,
-          maxLines: 3,
-          style: TextStyle(
-            fontSize: 15,
-            fontStyle: FontStyle.italic,
-            color: Colors.white,
-            //backgroundColor: Color.fromARGB(255, 11, 101, 161),
-          ),
-        ),
-        actions: [
-          // Ejemplo de un ícono de búsqueda
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // Acción al presionar el ícono de búsqueda
-            },
-          ),
-          // Ejemplo de un ícono de configuración
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // Acción al presionar el ícono de configuración
-            },
-          ),
-        ],
-        backgroundColor: const Color.fromARGB(255, 11, 101, 161),
-      ),
+      appBar: AppBar(title: const Text("Modificar Perfil")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: ListView(
-            children: <Widget>[
+          child: Column(
+            children: [
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nombre'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingrese su nombre';
-                  }
-                  return null;
-                },
+                decoration: const InputDecoration(labelText: "Nombre"),
+                validator: (value) => value!.isEmpty ? "Campo requerido" : null,
               ),
               TextFormField(
-                controller: _surnameController,
-                decoration: const InputDecoration(labelText: 'Apellido'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingrese su apellido';
-                  }
-                  return null;
-                },
+                controller: _lastnameController,
+                decoration: const InputDecoration(labelText: "Apellido"),
+                validator: (value) => value!.isEmpty ? "Campo requerido" : null,
               ),
-              TextFormField(
-                controller: _loginController,
-                decoration: const InputDecoration(labelText: 'Login'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingrese su login';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingrese su email';
-                  } else if (!isValidEmail(value)) {
-                    return 'Por favor ingrese un email válido';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Contraseña'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor ingrese su contraseña';
-                  } else if (!isValidPassword(value)) {
-                    return 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _confirmPasswordController,
-                decoration: const InputDecoration(labelText: 'Confirmar Contraseña'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor confirme su contraseña';
-                  } else if (value != _passwordController.text) {
-                    return 'Las contraseñas no coinciden';
-                  }
-                  return null;
-                },
-              ),
-              DropdownButtonFormField<dynamic>(
-                items: _roles.map<DropdownMenuItem<dynamic>>((role) {
-                  return DropdownMenuItem<dynamic>(
-                    value: role,
-                    child: Text(role['role']),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: _selectedRole.isNotEmpty ? _selectedRole: null, // Evitar el Null
+                items: _roles.map<DropdownMenuItem<String>> ((role) {
+                  return DropdownMenuItem<String>(
+                    value: role["role"], // Extraemos solo el nombre
+                    child: Text(role["role"]), // Mostramos solo el nombre
                   );
                 }).toList(),
-                onChanged: (value) {
+                onChanged: (newValue) {
                   setState(() {
-                    _selectedRole = value;
+                    _selectedRole = newValue!;
                   });
                 },
-                decoration: const InputDecoration(labelText: 'Perfil'),
-                validator: (value) {
-                  if (value == null) {
-                    return 'Por favor seleccione un perfil';
-                  }
-                  return null;
-                },
+                decoration: const InputDecoration(labelText: "Rol"),
               ),
-              ListTile(
-                title: Text(_selectedDate == null ? 'Seleccione su fecha de nacimiento' : 'Fecha de nacimiento: ${_selectedDate.toString().split(' ')[0]}'),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () => _selectDate(context),
-              ),
-              const SizedBox(height:20),
+              const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: _submitForm,
-                child: const Text('Registrar'),
+                onPressed: _updateUsuario,
+                child: const Text("Guardar Cambios"),
               ),
-              const SizedBox(height:10),
-              TextButton(
-                onPressed: () {
-                  // Regresamos al menu Admin
-                  Navigator.pop(context);
-                },
-                child: const Text('Regreso'),
+              const SizedBox(height: 10),
+              OutlinedButton(
+                //onPressed: () => Navigator.pop(context),
+                onPressed: () => _deleteUsuario(widget.usuario),
+                style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text("Eliminar Cuenta"),
               ),
             ],
           ),
@@ -299,8 +183,9 @@ class _PaginaModificarUsuarioState extends State<PaginaModificarUsuario> {
   }
 }
 
-void main() {
-  runApp(MaterialApp(
-    home: PaginaModificarUsuario(),
-  ));
-}
+
+//void main() {
+//  runApp(MaterialApp(
+//    home: EditProfilePage(),
+//  ));
+//}

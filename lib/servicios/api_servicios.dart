@@ -38,6 +38,22 @@ class ApiServicios {
     }
   }
 
+  // Método para obtener productos por categoria
+  Future<List<Product>> obtenerProductosEnSaldos( int categoryId ) async {
+    print("----------3-----");
+    final response = await http.get(Uri.parse('$url:$puerto/productos_par_categoria?category_id=$categoryId'));
+    if (response.statusCode == 200) {
+      print("----------4-----");
+      List<dynamic> data = json.decode(response.body);
+      print('los productos son $data');
+      data.forEach((item) {print(item['imagen']);});
+      print('los productos en getProductsByCategory son: $data');
+      return data.map((json) => Product.fromJson(_trasnformacionJson(json))).toList();
+    } else {
+      throw Exception('No podemos cargar los productos por categoria');
+    }
+  }
+
   // Método para obtener productos por tipo
   Future<List<Product>> getProductsByTipo( String tipo, int categoryId ) async {
     print("----------3-----");

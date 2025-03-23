@@ -58,9 +58,6 @@ class MyApp extends StatelessWidget {
         elevatedButtonTheme: const ElevatedButtonThemeData(
           style: ButtonStyle(
             backgroundColor: WidgetStatePropertyAll<Color>(Colors.blue),
-
-
-
             elevation: WidgetStatePropertyAll<double>(5.0),
             textStyle: WidgetStatePropertyAll<TextStyle>(
               const TextStyle(

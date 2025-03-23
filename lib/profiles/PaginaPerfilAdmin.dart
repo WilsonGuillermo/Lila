@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 
 import 'package:tienda/Transverso/perfil.dart';
 import 'package:tienda/Transverso/identificacion.dart';
+import 'package:tienda/Transverso/borraNavigacion.dart';
 
 // Clase para la página de perfil de Cocinero
 class PaginaPerfilAdmin extends PaginaPerfil {
@@ -13,15 +14,16 @@ class PaginaPerfilAdmin extends PaginaPerfil {
   /////////////////////////////////////////////////////////
   @override
   Widget build(BuildContext context) {
-    return PopScope(
+    return WillPopScope(
         // permite la accion de retroceso
-        canPop: true,
-        onPopInvoked: (bool didPop) {
+        onWillPop: () async {
           print('--------------');
-          print(didPop);
-          if (didPop) {
-            _clearFields_bis(context);
-          }
+
+          vaciarCamposYNavigacion(context,LoginPage());
+
+          print('--------------');
+
+          return false; // Evita que la pagina simplemente haga "pop"
         },
         child: Scaffold(
           appBar: AppBar(
@@ -35,9 +37,12 @@ class PaginaPerfilAdmin extends PaginaPerfil {
                 title: const Text('Ocuparse de los productos de la cocina'),
                 onTap: () {
                   // Lógica para ocuparse de los productos
-                  Navigator.pushReplacementNamed(
-                      context, '/pagina_ingredientes_admin',
-                      arguments: perfil);
+                  //Navigator.pushReplacementNamed( // se utiliza para borrar de la pila la pagina que envia
+                  Navigator.pushNamed(
+                      context,
+                      '/pagina_ingredientes_admin',
+                      arguments: perfil
+                  );
                 },
               ),
               ListTile(
@@ -49,14 +54,17 @@ class PaginaPerfilAdmin extends PaginaPerfil {
               ListTile(
                 title: const Text('Ocuparse de los usuarios'),
                 onTap: () {
-                  Navigator.pushReplacementNamed(
-                      context, '/pagina_usuarios_admin',
-                      arguments: perfil);
+                  Navigator.pushNamed(
+                      context,
+                      '/pagina_usuarios_admin',
+                      arguments: perfil
+                  );
                 },
               ),
               ElevatedButton(
                 onPressed: () {
-                  _clearFields_bis(context);
+                  vaciarCamposYNavigacion(context,LoginPage());
+                  //_clearFields_bis(context);
                 },
                 child: const Text('Cerrar'),
               ),

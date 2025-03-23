@@ -83,6 +83,18 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
     }
   }
 
+  void _resetForm() {
+    _formKey.currentState?.reset(); // Reinicia la validation del formulario
+    _nameController.clear();
+    _surnameController.clear();
+    _loginController.clear();
+    _emailController.clear();
+    _passwordController.clear();
+    _confirmPasswordController.clear();
+    setState(() {
+      _selectedDate = null; // Reinicia la fecha
+    });
+  }
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final loginAvailable = await isLoginAvailable(_loginController.text);
@@ -117,9 +129,67 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
       );
 
       if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuario creado exitosamente')),
+        //ScaffoldMessenger.of(context).showSnackBar(
+        //  const SnackBar(content: Text('Usuario creado exitosamente')),
+        //);
+        showGeneralDialog(
+          context: context,
+          barrierDismissible: false,
+          barrierColor: Colors.black.withOpacity(0.5), // Fondo oscuro semitransparente
+          transitionDuration: Duration(milliseconds: 300), // Duración de la animación
+          pageBuilder: (context, anim1, anim2) {
+            return ScaleTransition(
+              scale: CurvedAnimation(
+                parent: anim1,
+                curve: Curves.easeInOut,
+              ),
+              child: AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: const Text("🎉 Usuario creado", textAlign: TextAlign.center),
+                content: const Text(
+                  "El usuario ha sido creado exitosamente. ¿Qué deseas hacer?",
+                  textAlign: TextAlign.center,
+                ),
+                actionsAlignment: MainAxisAlignment.center,
+                actions: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      _resetForm();
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text("Crear otro"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.exit_to_app),
+                    label: const Text("Salir"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: const BorderSide(color: Colors.redAccent),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+          transitionBuilder: (context, anim1, anim2, child) {
+            return FadeTransition(
+              opacity: anim1,
+              child: child,
+            );
+          },
         );
+
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error en la creación del usuario')),
@@ -161,22 +231,6 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
             //backgroundColor: Color.fromARGB(255, 11, 101, 161),
           ),
         ),
-        actions: [
-          // Ejemplo de un ícono de búsqueda
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // Acción al presionar el ícono de búsqueda
-            },
-          ),
-          // Ejemplo de un ícono de configuración
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // Acción al presionar el ícono de configuración
-            },
-          ),
-        ],
         backgroundColor: const Color.fromARGB(255, 11, 101, 161),
       ),
       body: Padding(

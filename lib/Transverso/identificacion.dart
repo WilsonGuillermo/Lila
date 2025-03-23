@@ -20,7 +20,6 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(
         title: const Text(
           'La Tienda -- Pagina de Identificacion',
-
         ),
       ),
       body: Padding(
@@ -58,7 +57,8 @@ class _LoginPageState extends State<LoginPage> {
               },
               child: const Text('Iniciar sesión'),
             ),
-            Image.asset('assets/images/cop16-Cali.PNG',
+            Image.asset(
+              'assets/images/cop16-Cali.PNG',
               height: 100,
               width: 200,
             ),

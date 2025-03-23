@@ -20,6 +20,15 @@ class _ProductScreenState extends State<ProductScreen> {
   List<Product> products = [];
   final ApiServicios apiService = ApiServicios();
   late Future<List<dynamic>> _products;
+  String quien = "";
+
+
+  //if categoryId == 1 {
+  //  quien = "La tienda -- Productos femeninos";
+  //}
+  //else {
+  //  quien = "La tienda -- Productos Masculinos";
+  //}
 
   @override
   void initState() {
@@ -37,11 +46,22 @@ class _ProductScreenState extends State<ProductScreen> {
     });
   }
 
+  String _tituloCategoria(int categoria){
+    switch (categoria){
+      case 1 :
+        return "La tienda -- Productos femeninos";
+      case 2 :
+        return "La tienda -- Productos masculinos";
+      default :
+        return "La tienda -- Productos";
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('La tienda -- Lista de Productos'),
+        title: Text(_tituloCategoria(widget.categoryId)),
+        //title: Text('yo'),
       ),
       body: ListView.builder(
         //future: _products,
