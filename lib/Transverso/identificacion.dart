@@ -1,8 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart'; //Il s'agit du package Material de Flutter qui nous permettra d'accéder à de nombreux widgets indispensables à nos applications.
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+// Estamos mejorando la vaersion agregando un token de autentificacion para guardar la session del usuario
 
 import 'package:tienda/Transverso/parametros.dart';
+import 'package:tienda/Transverso/token_helper.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -101,19 +105,35 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void handleResponse(http.Response response, BuildContext context) {
+  //void handleResponse(http.Response response, BuildContext context) {
+  Future<void> handleResponse(http.Response response, BuildContext context) async {
     int statusCode = response.statusCode;
     if (statusCode == 200) {
       _showSuccessDialog(context);
       // Procesar la respuesta si la solicitud fue exitosa
       final Map<String, dynamic> responseData = jsonDecode(response.body);
+      //final responseData = jsonDecode(response.body) as Map<String, dynamic>;
       print('Datos del usuario: $responseData');
+      //final token = responseData['acces_token'];
+      //print('El token del usuario es: $token');
+
+      final utilisador = responseData['usuario'];
+
+      await guardarSesion(
+            token: responseData['acces_token'],
+            nombre: utilisador['usuario'],
+            rol: utilisador['profil'],
+      );
 
       // Recuperamos el perfil del usuario
       Profile perfil =
-          Profile(nombre: responseData['usuario'], rol: responseData['profil']);
+          //Profile(nombre: responseData['usuario'], rol: responseData['profil']);
+          Profile(nombre: utilisador['usuario'], rol: utilisador['profil']);
 
+        print('El token del usuario: ----2');
       Widget PaginaPerfil;
+
+      print('El token del usuario: ----3');
 
       if (perfil.rol == 'Admin') {
         Navigator.pushReplacementNamed(context, '/pagina_de_admin',

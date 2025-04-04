@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:tienda/Transverso/parametros.dart';
+import 'package:tienda/Transverso/token_helper.dart';
 
 class PaginaAgregarUsuario extends StatefulWidget {
   @override
@@ -20,7 +22,6 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
   DateTime? _selectedDate;
   List<dynamic> _roles = [];
   dynamic _selectedRole;
-  //String? _selectedProfile;
 
   // Recuperacion parametros backend
   String url = Parametros.direccionBackend;
@@ -33,7 +34,14 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
   }
 
   Future<void> _fetchRoles() async {
-    final response = await http.get(Uri.parse('$url:$puerto/roles'));
+    //Recuperar token para peticiones:
+    final headers = await getHeadersConToken();
+
+
+    //final response = await http.get(Uri.parse('$url:$puerto/roles')),
+    final response = await http.get(Uri.parse('$url:$puerto/roles'),
+                                    headers: headers
+                                        );
 
     print('los roles');
     print(response.body);
