@@ -28,41 +28,21 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
   String url = Parametros.direccionBackend;
   int puerto = Parametros.puerto;
 
-  //final roles = await fetchRoles();
-
   @override
   void initState() {
     super.initState();
     fetchRoles().then((roles) {
       setState(() {
-        _roles = roles;
+        _roles = roles.map((r) =>
+        {
+          "id": r["id_rol"],
+          "nombre": r["nombre_del_rol"],
+        })
+        .toList();
+
+        print("Los profiles recuperados son: ${_roles}");
       });
     });
-  }
-
-
-  Future<void> _fetchRoles() async {
-    //Recuperar token para peticiones:
-    final headers = await getHeadersConToken();
-
-    //final response = await http.get(Uri.parse('$url:$puerto/roles')),
-    final response = await http.get(Uri.parse('$url:$puerto/roles'),
-                                    headers: headers
-                                   );
-
-    print('los roles');
-    print(response.body);
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _roles = jsonDecode(response.body);
-      });
-    } else {
-      // Manejo de errores
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al cargar los roles')),
-      );
-    }
   }
 
   bool isValidEmail(String email) {
@@ -83,11 +63,11 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
     //Recuperar token para peticiones:
     final headers = await getHeadersConToken();
 
-    //final response = await http.get(Uri.parse('$url:$puerto/verificarCuenta/$login'));
-    final response = await http.get(Uri.parse('$url:$puerto/verificarCuenta/$login'),
+    final response = await http.get(Uri.parse('$url:$puerto/auth/verificarCuenta/$login'),
         headers: headers
     );
-    return response.statusCode == 200;
+
+    return response.statusCode == 404; // Como no lo encontro, quiere decir que lo podemos utilizar
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -133,26 +113,23 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
         return;
       }
 
+      final headers = await getHeadersConToken();
+
       final response = await http.post(
-        Uri.parse('$url:$puerto/agregarCuenta'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'name': _nameController.text,
-          'surname': _surnameController.text,
-          'login': _loginController.text,
+        Uri.parse('$url:$puerto/auth/usuarios'),
+        headers: headers,
+        body: jsonEncode({
+          'nombre': _nameController.text,
+          'apellido': _surnameController.text,
+          'nombre_usuario': _loginController.text,
           'email': _emailController.text,
-          'password': _passwordController.text,
-          'birth_date': _selectedDate.toString(),
-          'role': _selectedRole['role'].toString(),
+          'contrasena': _passwordController.text,
+          'fecha_nacimiento': _selectedDate.toString(),
+          'rol_id': _selectedRole['id'],
         }),
       );
 
-      if (response.statusCode == 201) {
-        //ScaffoldMessenger.of(context).showSnackBar(
-        //  const SnackBar(content: Text('Usuario creado exitosamente')),
-        //);
+      if (response.statusCode == 200) {
         showGeneralDialog(
           context: context,
           barrierDismissible: false,
@@ -332,8 +309,7 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
                 items: _roles.map<DropdownMenuItem<dynamic>>((role) {
                   return DropdownMenuItem<dynamic>(
                     value: role,
-                    child: Text(role['nombre_del_rol']),
-                    //child: Text(role['role']),
+                    child: Text(role['nombre']),
                   );
                 }).toList(),
                 onChanged: (value) {

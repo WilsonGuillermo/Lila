@@ -32,28 +32,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   String url = Parametros.direccionBackend;
   int puerto = Parametros.puerto;
 
-  Future<void> _fetchRoles() async {
-    final headers = await getHeadersConToken();
-
-    final response = await http.get(Uri.parse('$url:$puerto/auth/roles'),
-        headers: headers
-    );
-
-    print('los roles');
-    print(response.body);
-
-    if (response.statusCode == 200) {
-      setState(() {
-        _roles = jsonDecode(response.body);
-      });
-    } else {
-      // Manejo de errores
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al cargar los roles')),
-      );
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -65,7 +43,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
     print("el rol est : $_selectedRole");
     print("el id est : $_id_usuario");
 
-    Future.microtask(() => _fetchRoles()); // Cargamos los roles
+    fetchRoles().then((roles) {
+      setState(() {
+        _roles = roles.map((r) =>
+        {
+          "id": r["id_rol"],
+          "nombre": r["nombre_del_rol"],
+        }).toList();
+
+        print("Los profiles recuperados son: ${_roles}");
+      });
+    });
   }
 
   @override
@@ -126,8 +114,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 value: _selectedRole.isNotEmpty ? _selectedRole: null, // Evitar el Null
                 items: _roles.map<DropdownMenuItem<String>> ((role) {
                   return DropdownMenuItem<String>(
-                    value: role["nombre_del_rol"], // Extraemos solo el nombre
-                    child: Text(role["nombre_del_rol"]), // Mostramos solo el nombre
+                    value: role["nombre"], // Extraemos solo el nombre
+                    child: Text(role["nombre"]), // Mostramos solo el nombre
                   );
                 }).toList(),
                 onChanged: (newValue) {
@@ -153,23 +141,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     mensaje: '¿Seguro que deseas eliminar a ${widget.usuario["nombre"]}?',
                     onDelete: () async {
                       await ApiServiciosCuentas.suprimirUsuario(widget.usuario["id_usuario"]);
-                      //await suprimirUsuario(usuario["id_usuario"]);
                       Navigator.pop(context); // Regresa a la lista después de eliminar
                     },
                   );
                 },
               ),
-
-              //OutlinedButton(
-              //  onPressed: () {
-              //    mostrarDialogoConfirmacionEliminarUsuario(context, widget.usuario, () {
-              //        Navigator.pop(context, "usuario_eliminado");
-              //      }
-              //    );
-              //  },
-
-              //  child: const Text("Eliminar Cuenta"),
-              //),
             ],
           ),
         ),

@@ -44,7 +44,7 @@ Future<void> mostrarDialogoConfirmacion({
   );
 }
 
-Future<List<String>> fetchRoles() async {
+Future<List<dynamic>> fetchRoles() async {
   // Recuperacion parametros backend
   String url = Parametros.direccionBackend;
   int puerto = Parametros.puerto;
@@ -57,7 +57,10 @@ Future<List<String>> fetchRoles() async {
 
   if (response.statusCode == 200) {
     final List<dynamic> roles = json.decode(response.body);
-    return roles.map<String>((r) => r['nombre_del_rol'].toString()).toList();
+    final List<dynamic> profiles = roles.map<String>((r) => r['nombre_del_rol'].toString()).toList();
+    print("Los profiles son:  $roles");
+
+    return roles;
   } else {
     throw Exception('Error al cargar los roles');
   }

@@ -43,7 +43,7 @@ class ApiServiciosCuentas {
     return response.statusCode == 200;
   }
 
-  // Obtener lista de usuarios
+  // Obtener lista de usuarios ( verificar si es utilizada )
   static Future<List<dynamic>> getUsers() async {
     final headers = await getHeadersConToken();
 
