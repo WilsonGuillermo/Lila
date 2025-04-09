@@ -1,3 +1,6 @@
+// Version 1.1.0 WilsonGuillermo
+// Agregamos la verification du token
+
 import 'dart:convert';
 import 'package:flutter/material.dart'; //Il s'agit du package Material de Flutter qui nous permettra d'accéder à de nombreux widgets indispensables à nos applications.
 import 'package:http/http.dart' as http;
@@ -85,16 +88,17 @@ class _LoginPageState extends State<LoginPage> {
     } else {
       try {
         final response = await http.post(
-          Uri.parse('$url:$puerto/login'),
-          headers: <String, String>{
+          Uri.parse('$url:$puerto/auth/login'),
+          headers: {
             'Content-Type': 'application/json; charset=UTF-8',
           },
-          body: jsonEncode(<String, String>{
-            'username': username,
-            'password': password,
+          body: jsonEncode({
+            'nombre_usuario': username,
+            'contrasena': password,
           }),
         );
 
+        print("la requete est: $url:$puerto/login, $username, $password");
         handleResponse(response, context);
       } catch (error) {
         // Manejar errores de connexion u otros
@@ -112,23 +116,18 @@ class _LoginPageState extends State<LoginPage> {
       _showSuccessDialog(context);
       // Procesar la respuesta si la solicitud fue exitosa
       final Map<String, dynamic> responseData = jsonDecode(response.body);
-      //final responseData = jsonDecode(response.body) as Map<String, dynamic>;
-      print('Datos del usuario: $responseData');
-      //final token = responseData['acces_token'];
-      //print('El token del usuario es: $token');
 
-      final utilisador = responseData['usuario'];
+      print('Datos del usuario: $responseData');
 
       await guardarSesion(
-            token: responseData['acces_token'],
-            nombre: utilisador['usuario'],
-            rol: utilisador['profil'],
+            token: responseData['access_token'],
+            nombre: responseData['nombre_usuario'],
+            rol: responseData['profil'],
       );
 
       // Recuperamos el perfil del usuario
       Profile perfil =
-          //Profile(nombre: responseData['usuario'], rol: responseData['profil']);
-          Profile(nombre: utilisador['usuario'], rol: utilisador['profil']);
+          Profile(nombre: responseData['nombre_usuario'], rol: responseData['profil']);
 
         print('El token del usuario: ----2');
       Widget PaginaPerfil;

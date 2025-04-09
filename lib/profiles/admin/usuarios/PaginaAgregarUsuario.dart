@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:tienda/Transverso/parametros.dart';
+import 'package:tienda/Transverso/dialogos.dart';
 import 'package:tienda/Transverso/token_helper.dart';
 
 class PaginaAgregarUsuario extends StatefulWidget {
@@ -27,21 +28,27 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
   String url = Parametros.direccionBackend;
   int puerto = Parametros.puerto;
 
+  //final roles = await fetchRoles();
+
   @override
   void initState() {
     super.initState();
-    _fetchRoles();
+    fetchRoles().then((roles) {
+      setState(() {
+        _roles = roles;
+      });
+    });
   }
+
 
   Future<void> _fetchRoles() async {
     //Recuperar token para peticiones:
     final headers = await getHeadersConToken();
 
-
     //final response = await http.get(Uri.parse('$url:$puerto/roles')),
     final response = await http.get(Uri.parse('$url:$puerto/roles'),
                                     headers: headers
-                                        );
+                                   );
 
     print('los roles');
     print(response.body);
@@ -73,7 +80,13 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
   }
 
   Future<bool> isLoginAvailable(String login) async {
-    final response = await http.get(Uri.parse('$url:$puerto/verificarCuenta/$login'));
+    //Recuperar token para peticiones:
+    final headers = await getHeadersConToken();
+
+    //final response = await http.get(Uri.parse('$url:$puerto/verificarCuenta/$login'));
+    final response = await http.get(Uri.parse('$url:$puerto/verificarCuenta/$login'),
+        headers: headers
+    );
     return response.statusCode == 200;
   }
 
@@ -319,7 +332,8 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
                 items: _roles.map<DropdownMenuItem<dynamic>>((role) {
                   return DropdownMenuItem<dynamic>(
                     value: role,
-                    child: Text(role['role']),
+                    child: Text(role['nombre_del_rol']),
+                    //child: Text(role['role']),
                   );
                 }).toList(),
                 onChanged: (value) {

@@ -1,16 +1,19 @@
+// Version 1.1.0 WilsonGuillermo
+// Agregamos la verification du token
+// Maj y supresion cuenta OK
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:tienda/Transverso/parametros.dart';
 import 'package:tienda/servicios/api_servicios_cuentas.dart';
+import 'package:tienda/Transverso/dialogos.dart';
+import 'package:tienda/Transverso/token_helper.dart';
 
 class EditProfilePage extends StatefulWidget {
-  //final UserModel user; // Recibe el usuario a modificar
+  // Recibe el usuario a modificar
   final dynamic usuario;
-  //List<dynamic> _usuariosFiltrados = [];
-
-  //EditProfilePage({required this.usuario, Key? key}) : super(key: key);
   EditProfilePage({required this.usuario});
 
   @override
@@ -23,16 +26,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _nameController;
   late TextEditingController _lastnameController;
   late String _selectedRole;
-
-  //final dynamic usuario_a_modifier = usuario;
-  //print('el usuario a modificar es: 'usuario_a_modifier);
+  late int _id_usuario = 0;
 
   // Recuperacion parametros backend
   String url = Parametros.direccionBackend;
   int puerto = Parametros.puerto;
 
   Future<void> _fetchRoles() async {
-    final response = await http.get(Uri.parse('$url:$puerto/roles'));
+    final headers = await getHeadersConToken();
+
+    final response = await http.get(Uri.parse('$url:$puerto/auth/roles'),
+        headers: headers
+    );
 
     print('los roles');
     print(response.body);
@@ -52,10 +57,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.usuario["name"]);
-    _lastnameController = TextEditingController(text: widget.usuario["lastname"]);
+    _nameController = TextEditingController(text: widget.usuario["nombre"]);
+    _lastnameController = TextEditingController(text: widget.usuario["apellido"]);
     _selectedRole = widget.usuario["rol"] ?? "Usuario"; // Si no tiene role pone "Usuario"
+    _id_usuario = widget.usuario["id_usuario"];
+
     print("el rol est : $_selectedRole");
+    print("el id est : $_id_usuario");
 
     Future.microtask(() => _fetchRoles()); // Cargamos los roles
   }
@@ -70,11 +78,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void _updateUsuario() async {
     if (_formKey.currentState!.validate()) {
       final updatedUser = {
-        "id": widget.usuario["id"], // Necesitamos el ID para actualizar
-        "name": _nameController.text,
-        "lastname": _lastnameController.text,
-        "role": _selectedRole,
+        "id": widget.usuario["id_usuario"], // Necesitamos el ID para actualizar
+        "nombre": _nameController.text,
+        "apellido": _lastnameController.text,
+        "rol": _selectedRole,
       };
+
+      print("los datos a poner al dia son : $updatedUser");
 
       bool success = await ApiServiciosCuentas.modificarUsuario(updatedUser);
 
@@ -89,42 +99,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         );
       }
     }
-  }
-
-  void _deleteUsuario(dynamic user) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Eliminar usuario"),
-        content: Text("¿Seguro que quieres eliminar a ${user["name"]}?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Cancelar"),
-          ),
-          TextButton(
-            onPressed: () async {
-              bool success = await ApiServiciosCuentas.suprimirUsuario(user["id"]);
-              print("usuario suprimé $success");
-
-              if (success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Usuario eliminado")),
-                );
-                Navigator.pop(context, true); //Devolvemos "True" al cerrar la pagina
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Error al eliminar usuario")),
-                );
-              }
-
-              Navigator.pop(context);
-            },
-            child: const Text("Eliminar", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -152,8 +126,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 value: _selectedRole.isNotEmpty ? _selectedRole: null, // Evitar el Null
                 items: _roles.map<DropdownMenuItem<String>> ((role) {
                   return DropdownMenuItem<String>(
-                    value: role["role"], // Extraemos solo el nombre
-                    child: Text(role["role"]), // Mostramos solo el nombre
+                    value: role["nombre_del_rol"], // Extraemos solo el nombre
+                    child: Text(role["nombre_del_rol"]), // Mostramos solo el nombre
                   );
                 }).toList(),
                 onChanged: (newValue) {
@@ -169,12 +143,33 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 child: const Text("Guardar Cambios"),
               ),
               const SizedBox(height: 10),
-              OutlinedButton(
-                //onPressed: () => Navigator.pop(context),
-                onPressed: () => _deleteUsuario(widget.usuario),
-                style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text("Eliminar Cuenta"),
+              ElevatedButton.icon(
+                icon: Icon(Icons.delete_forever),
+                label: Text("Suprimir Cuenta"),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () {
+                  mostrarDialogoConfirmacion(
+                    context: context,
+                    mensaje: '¿Seguro que deseas eliminar a ${widget.usuario["nombre"]}?',
+                    onDelete: () async {
+                      await ApiServiciosCuentas.suprimirUsuario(widget.usuario["id_usuario"]);
+                      //await suprimirUsuario(usuario["id_usuario"]);
+                      Navigator.pop(context); // Regresa a la lista después de eliminar
+                    },
+                  );
+                },
               ),
+
+              //OutlinedButton(
+              //  onPressed: () {
+              //    mostrarDialogoConfirmacionEliminarUsuario(context, widget.usuario, () {
+              //        Navigator.pop(context, "usuario_eliminado");
+              //      }
+              //    );
+              //  },
+
+              //  child: const Text("Eliminar Cuenta"),
+              //),
             ],
           ),
         ),
@@ -182,10 +177,3 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 }
-
-
-//void main() {
-//  runApp(MaterialApp(
-//    home: EditProfilePage(),
-//  ));
-//}

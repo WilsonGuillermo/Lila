@@ -17,7 +17,6 @@ class PaginaUsuariosAdmin extends PaginaPerfilAdmin {
       onWillPop: () async {
         print('--------------');
         Navigator.pop(context); // Regresa sin modificar la pila
-        //vaciarCamposYNavigacion(context,PaginaPerfilAdmin(perfil));
 
         print('--------------');
 
@@ -43,7 +42,6 @@ class PaginaUsuariosAdmin extends PaginaPerfilAdmin {
                     context,
                     MaterialPageRoute(
                       builder: (context) => PaginaAgregarUsuario(),
-                      //builder: (context) => StockagePage(),
                     ));
               },
             ),
@@ -54,7 +52,6 @@ class PaginaUsuariosAdmin extends PaginaPerfilAdmin {
                     context,
                     MaterialPageRoute(
                       builder: (context) => UserListPage(),
-                      //builder: (context) => PaginaModificarUsuario(),
                     ));
               },
             ),

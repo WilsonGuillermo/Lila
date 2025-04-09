@@ -14,6 +14,7 @@ Future<void> guardarSesion({
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString('access_token', token);
   await prefs.setString('usuario_nombre', nombre);
+  //await prefs.setInt('usuario_rol_id', rol_id);
   await prefs.setString('usuario_rol', rol);
 }
 
@@ -29,6 +30,7 @@ Future<Map<String, String?>> recuperarDatosUsuario() async {
   return {
     'nombre': prefs.getString('usuario_nombre'),
     'email': prefs.getString('usuario_email'),
+    //'rol_id': prefs.getString('usuario_rol_id'),
     'rol': prefs.getString('usuario_rol'),
   };
 }

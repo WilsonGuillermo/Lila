@@ -1,10 +1,16 @@
+// Version 1.1.0 WilsonGuillermo
+// Agregamos la verification du token
+// Maj y supresion cuenta OK
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:tienda/Transverso/parametros.dart';
+import 'package:tienda/Transverso/dialogos.dart';
+import 'package:tienda/servicios/api_servicios_cuentas.dart';
 import 'package:tienda/profiles/admin/usuarios/PaginaModificarUsuario.dart';
-//import 'package:tienda/servicios/api_servicios_cuentas.dart';
+import 'package:tienda/Transverso/token_helper.dart';
 
 class UserListPage extends StatefulWidget {
   @override
@@ -12,7 +18,6 @@ class UserListPage extends StatefulWidget {
 }
 
 class _UserListPageState extends State<UserListPage> {
-  //List<UserModel> _usuarios = []; // Lista de usuarios
   List<dynamic> _usuarios = [];
   List<dynamic> _usuariosFiltrados = [];
   bool _isLoading = true;
@@ -29,7 +34,11 @@ class _UserListPageState extends State<UserListPage> {
   }
 
   Future<void> _loadUsuarios() async {
-    final response = await http.get(Uri.parse('$url:$puerto/usuarios'));
+    final headers = await getHeadersConToken();
+
+    final response = await http.get(Uri.parse('$url:$puerto/auth/usuarios'),
+        headers: headers
+    );
 
     print('los usuarios');
     print(response.body);
@@ -51,40 +60,14 @@ class _UserListPageState extends State<UserListPage> {
   void _filterUsers(String query) {
     setState(() {
       _usuariosFiltrados = _usuarios.where((user) {
-        final name = user["name"].toLowerCase();
-        final lastname = user["lastname"].toLowerCase();
+        final name = user["nombre"].toLowerCase();
+        final lastname = user["apellido"].toLowerCase();
         final rol = user["rol"].toLowerCase();
         return name.contains(query.toLowerCase()) ||
             lastname.contains(query.toLowerCase()) ||
             rol.contains(query.toLowerCase());
       }).toList();
     });
-  }
-
-  void _deleteUser(dynamic user) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Eliminar usuario"),
-        content: Text("¿Seguro que quieres eliminar a ${user["name"]}?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Cancelar"),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _usuarios.remove(user);
-                _usuariosFiltrados.remove(user);
-              });
-              Navigator.pop(context);
-            },
-            child: Text("Eliminar", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -120,11 +103,11 @@ class _UserListPageState extends State<UserListPage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   child: ListTile(
                     leading: _getRoleIcon(user["rol"]),
-                    title: Text("Nombre: ${user["name"]}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text("Nombre: ${user["nombre"]}", style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Apellido: ${user["lastname"]}"),
+                        Text("Apellido: ${user["apellido"]}"),
                         Text("Puesto: ${user["rol"]}", style: const TextStyle(fontWeight: FontWeight.w500, color: Colors.blue)),
                       ],
                     ),
@@ -133,17 +116,32 @@ class _UserListPageState extends State<UserListPage> {
                       children: [
                         IconButton(
                           icon: Icon(Icons.edit, color: Colors.green),
-                          //onPressed: () => Navigator.pop(context),
-                          onPressed: () {
-                            Navigator.push(
+                          onPressed: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(builder: (context) => EditProfilePage(usuario: user)),
                             );
+                            // Recargamos la pagina con los cambios
+                            _loadUsuarios();
                           },
                         ),
                         IconButton(
                           icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteUser(user),
+                          onPressed: () {
+                            mostrarDialogoConfirmacion(
+                              context: context,
+                              mensaje: '¿Deseas eliminar a ${user["nombre"]}?',
+                              onDelete: () async {
+                                // Aquí va la lógica de borrado
+                                await ApiServiciosCuentas.suprimirUsuario(user["id_usuario"]);
+
+                                setState(() {
+                                    _usuarios.removeWhere((u) => u["id_usuario"] == user["id_usuario"]);
+                                    _usuariosFiltrados.removeWhere((u) => u["id_usuario"] == user["id_usuario"]);
+                                  });
+                                }
+                            );
+                          },
                         ),
                       ],
                     ),
