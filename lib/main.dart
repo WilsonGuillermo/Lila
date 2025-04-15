@@ -10,6 +10,7 @@ import 'package:tienda/profiles/PaginaPerfilDirigente.dart';
 
 import 'package:tienda/profiles/cocinero/PaginaIngredientesCocinero.dart';
 import 'package:tienda/profiles/admin/PaginaIngredientesAdmin.dart';
+import 'package:tienda/profiles/admin/PaginaProductosAdmin.dart';
 import 'package:tienda/profiles/admin/PaginaUsuariosAdmin.dart';
 
 //import 'package:tienda/screens/producto_screen.dart';
@@ -85,6 +86,8 @@ class MyApp extends StatelessWidget {
             PaginaIngredientesCocinero(
                 perfil: ModalRoute.of(context)!.settings.arguments as Profile),
         '/pagina_ingredientes_admin': (context) => PaginaIngredientesAdmin(
+            perfil: ModalRoute.of(context)!.settings.arguments as Profile),
+        '/pagina_productos_admin': (context) => PaginaProductosAdmin(
             perfil: ModalRoute.of(context)!.settings.arguments as Profile),
         '/pagina_usuarios_admin': (context) => PaginaUsuariosAdmin(
             perfil: ModalRoute.of(context)!.settings.arguments as Profile),

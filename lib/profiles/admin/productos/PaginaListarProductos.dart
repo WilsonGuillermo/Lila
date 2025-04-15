@@ -12,12 +12,12 @@ import 'package:tienda/servicios/api_servicios_cuentas.dart';
 import 'package:tienda/profiles/admin/usuarios/PaginaModificarUsuario.dart';
 import 'package:tienda/Transverso/token_helper.dart';
 
-class UserListPage extends StatefulWidget {
+class PaginaListarProducto extends StatefulWidget {
   @override
-  _UserListPageState createState() => _UserListPageState();
+  _PaginaListarProductoState createState() => _PaginaListarProductoState();
 }
 
-class _UserListPageState extends State<UserListPage> {
+class _PaginaListarProductoState extends State<PaginaListarProducto> {
   List<dynamic> _usuarios = [];
   List<dynamic> _usuariosFiltrados = [];
   bool _isLoading = true;

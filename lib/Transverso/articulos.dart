@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:tienda/Transverso/parametros.dart';
 import 'package:tienda/Transverso/cantidadmasomenos.dart';
 import 'package:tienda/Transverso/stock.dart';
+import 'package:tienda/Transverso/token_helper.dart';
 
 class ArticulosPage extends StatefulWidget {
   @override
@@ -22,12 +23,15 @@ class _ArticulosPageState extends State<ArticulosPage> {
   String url = Parametros.direccionBackend;
   int puerto = Parametros.puerto;
 
-  //print('mi backend es : $url:$puerto');
-
   Future<void> ingredientesRef(BuildContext context) async {
+    final headers = await getHeadersConToken();
+
     try {
       final response =
-          await http.get(Uri.parse('$url:$puerto/ingredientes_referencial'));
+          await http.get(
+            Uri.parse('$url:$puerto/productos/productos_base'),
+            headers: headers,
+          );
 
       print('requete enviada 2');
 
@@ -44,8 +48,10 @@ class _ArticulosPageState extends State<ArticulosPage> {
     if (statusCode == 200) {
       // Procesar la respuesta si la solicitud fue exitosa
       print('regreso de la requete enviada');
+      //final Map<String, dynamic> responseData = jsonDecode(response.body);
       //print('Los productos (data) son: $response.body['productos']');
-      List<dynamic> data = json.decode(response.body)['productos'];
+      print('Los productos son: $response');
+      List<dynamic> data = json.decode(response.body); //['productos'];
 
       print('Los productos (data) son: $data');
       //final Map<String, dynamic> responseData = jsonDecode(response.body);
@@ -55,7 +61,7 @@ class _ArticulosPageState extends State<ArticulosPage> {
 
       try {
         Todos = data.map((item) => item.toString()).toList();
-        Productos = data.map((item) => item[0].toString()).toList();
+        Productos = data.map((item) => item[1].toString()).toList();
         //IngredientesPage().ingredientesRef(context);
         print('Los productos son y antes de llamar: $Productos');
         print('Todo el contenido es: $Todos');
@@ -78,7 +84,8 @@ class _ArticulosPageState extends State<ArticulosPage> {
     //await handleResponse(response, context);
     await ingredientesRef(context);
     setState(() {
-      ListaProductos = Productos;
+      //ListaProductos = Productos;
+      ListaProductos = Todos;
       print('los elementos q tiene la lista son:');
       print(ListaProductos.length);
       print(ListaProductos);

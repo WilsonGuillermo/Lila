@@ -47,7 +47,7 @@ class ApiServiciosCuentas {
   static Future<List<dynamic>> getUsers() async {
     final headers = await getHeadersConToken();
 
-    final response = await http.get(Uri.parse('$url:$puerto/auth/usuarios'),
+    final response = await http.get(Uri.parse('$url:$puerto/usuarios/usuarios'),
         headers: headers
     );
 

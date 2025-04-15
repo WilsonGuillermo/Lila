@@ -27,7 +27,7 @@ class PaginaPerfilDirigente extends PaginaPerfil {
               // Lógica para ocuparse de los platos del día
             },
           ),
-          Image.asset('assets/images/Calicop16.JPG',
+          Image.asset('assets/images/Calicop16.jpg',
             height: 100,
             width: 200,
           ),

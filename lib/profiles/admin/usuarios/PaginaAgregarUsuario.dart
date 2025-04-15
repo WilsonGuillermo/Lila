@@ -63,7 +63,7 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
     //Recuperar token para peticiones:
     final headers = await getHeadersConToken();
 
-    final response = await http.get(Uri.parse('$url:$puerto/auth/verificarCuenta/$login'),
+    final response = await http.get(Uri.parse('$url:$puerto/usuarios/verificarCuenta/$login'),
         headers: headers
     );
 
@@ -116,7 +116,7 @@ class _PaginaAgregarUsuarioState extends State<PaginaAgregarUsuario> {
       final headers = await getHeadersConToken();
 
       final response = await http.post(
-        Uri.parse('$url:$puerto/auth/usuarios'),
+        Uri.parse('$url:$puerto/usuarios/usuarios'),
         headers: headers,
         body: jsonEncode({
           'nombre': _nameController.text,

@@ -51,7 +51,7 @@ Future<List<dynamic>> fetchRoles() async {
 
   final headers = await getHeadersConToken();
 
-  final response = await http.get(Uri.parse('$url:$puerto/auth/roles'),
+  final response = await http.get(Uri.parse('$url:$puerto/usuarios/roles'),
       headers: headers
   );
 

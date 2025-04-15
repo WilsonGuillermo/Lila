@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:tienda/Transverso/parametros.dart';
 import 'package:tienda/Transverso/token_helper.dart';
+import 'package:tienda/Transverso/cambiarContrasena.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -19,6 +20,8 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  bool pasaOnoPasa = false;
+  int identUsuario = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
     } else {
       try {
         final response = await http.post(
-          Uri.parse('$url:$puerto/auth/login'),
+          Uri.parse('$url:$puerto/usuarios/login'),
           headers: {
             'Content-Type': 'application/json; charset=UTF-8',
           },
@@ -97,7 +100,6 @@ class _LoginPageState extends State<LoginPage> {
           }),
         );
 
-        print("la requete est: $url:$puerto/login, $username, $password");
         handleResponse(response, context);
       } catch (error) {
         // Manejar errores de connexion u otros
@@ -118,10 +120,48 @@ class _LoginPageState extends State<LoginPage> {
       print('Datos del usuario: $responseData');
 
       await guardarSesion(
+            idUsuario: responseData['id_usuario'],
             token: responseData['access_token'],
             nombre: responseData['nombre_usuario'],
             rol: responseData['profil'],
+            primerAcceso: responseData['primer_acceso'],
       );
+
+      final Map<String, dynamic> utilisador = await recuperarDatosUsuario();
+      pasaOnoPasa = utilisador['primerAcceso'];
+      identUsuario = utilisador['idUsuario'];
+
+      print('Datos del usuario recuperados: $utilisador');
+
+      //if ( utilisador['primer_acceso'] == true ) {
+      if ( pasaOnoPasa ){
+        print("--------------si entramos------");
+        print("Valor del idUsuario a enviar es : $identUsuario");
+        ///////////////////////
+        try {
+          //await Navigator.push(
+          await Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                //builder: (context) => CambiarContrasenaPage(usuarioId: utilisador['idUsuario']),
+                builder: (context) => CambiarContrasenaPage(
+                    id_usuario: identUsuario,
+                    primerAcceso: pasaOnoPasa,
+                ),
+              )
+          );
+
+        } catch (error) {
+          // Manejar errores de connexion u otros
+          print("tenemos todo mas sin embargo no entramos");
+          print('Error: $error');
+          _showErrorDialog(context, 'Problema con el identUsuario.');
+        }
+        ///////////////////////
+
+      };
+
+      print("--------------de regreso------");
 
       // Recuperamos el perfil del usuario
       Profile perfil =
